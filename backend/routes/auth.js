@@ -41,4 +41,27 @@ router.post('/register', async (req, res) => {
     }
 });
 
+router.post('/login', async (req, res) => {
+    
+    try{
+        const { usernameOrEmail, password } = req.body;
+        
+        if(!usernameOrEmail || !password){
+            return res.status(400).json({ error : 'All fields are required'})
+        }
+
+        const user = await User.findOne({ $or: [{username: usernameOrEmail}, {email: usernameOrEmail}] });
+
+        if( !user || !(await bcrypt.compare(password, user.hashedPassword))) {
+            return res.status(404).json({error : "Incorrect email or password."});
+        }
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        //console.log('Token is : ',token);
+        return res.status(200).json({token});
+    } catch( err ){
+        //console.log("Error is : ",err);
+        res.status(500).json({error : "Error while fetching data"});
+    }
+});
+
 module.exports = router;
