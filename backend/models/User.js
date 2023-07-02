@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcrypt');
 const validator = require('validator');
 
 const userSchema = new mongoose.Schema({
@@ -12,8 +12,8 @@ const userSchema = new mongoose.Schema({
           message: '{VALUE} is not a valid email address.',
         },
       },
-      password : {type: String, required: true}
-});
+      hashedPassword : {type: String, required: true}
+},{timestamps: true});
 
 const User = mongoose.model('User', userSchema);
 
