@@ -16,6 +16,10 @@ router.post('/register', async (req, res) => {
             return res.status(400).json({ error : 'All fields are required'})
         }
 
+        if(password.length < 5 || username.length < 5){
+            return res.status(400).json({error : 'Username and Password length should be atleast 5'});
+        }
+
         // username / password aldready exists check
 
         const existingUsername = await User.findOne({ username });
@@ -36,8 +40,8 @@ router.post('/register', async (req, res) => {
         res.status(201).json({message : 'User registered successfully.'});
 
     }catch(err){
-        console.log("Error while registering user: ",err);   // Should improve. Invalid email is resulting in 500 error.
-        res.status(500).json({error : 'An error occured'});
+        console.log("Error while registering user: ");   // Should improve. Invalid email is resulting in 500 error.
+        res.status(500).json(err);
     }
 });
 
@@ -59,7 +63,7 @@ router.post('/login', async (req, res) => {
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
         //console.log('Token is : ',token);
         return res.status(200).json({token});
-        
+
     } catch( err ){
         //console.log("Error is : ",err);
         res.status(500).json({error : "Error while fetching data"});
