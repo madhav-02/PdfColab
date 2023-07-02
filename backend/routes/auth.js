@@ -55,9 +55,11 @@ router.post('/login', async (req, res) => {
         if( !user || !(await bcrypt.compare(password, user.hashedPassword))) {
             return res.status(404).json({error : "Incorrect email or password."});
         }
+
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
         //console.log('Token is : ',token);
         return res.status(200).json({token});
+        
     } catch( err ){
         //console.log("Error is : ",err);
         res.status(500).json({error : "Error while fetching data"});
