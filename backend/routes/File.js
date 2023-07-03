@@ -2,6 +2,7 @@ const express = require('express');
 const Pdf = require('../models/Pdf');
 const Comment = require('../models/Comment');
 const authenticateToken = require('../middlewares/authMiddleware');
+const mongoose = require('mongoose');
 const router = express.Router();
 
 
@@ -71,12 +72,39 @@ router.post('/comment', authenticateToken, async (req, res) => {
         if(!pdf){
             return res.status(404).json({error : 'Pdf not found'});
         }
-        //console.log(pdf.uploadedBy.toString());
-        if(requestUserId !== pdf.uploadedBy.toString()){
-            return res.status(401).json({error : 'UnAuthorized access.'});
-        }
         
-        return res.status(200).json(pdf.comments);
+        // Return array of json objects of username and their comment from pdf.comments object.
+        //console.log(pdf.comments[0]._id.toString());
+
+        const allComments = pdf.comments;
+        
+        const comments = await Comment.aggregate([
+            {
+                $match: {
+                    pdfId: new mongoose.Types.ObjectId(pdfId)
+                  }
+                },
+            {
+                $lookup: {
+                    from: 'users', // The collection name for User model
+                    localField: 'authorId',
+                    foreignField: '_id',
+                    as: 'user'
+                }
+            },
+            {
+                $project: {
+                    username: {
+                    $arrayElemAt: ['$user.username', 0]
+                    },
+                    comment: '$content'
+                }
+            }
+          ]);
+      
+          //console.log(comments);
+          
+        return res.status(200).json(comments);
 
     } catch( err ){
         console.log(err);
