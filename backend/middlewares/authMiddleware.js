@@ -10,7 +10,7 @@ const authenticateToken = (req, res, next) => {
         req.userId = decoded.id;
         next();
     } catch (error) {
-        return res.status(401).json({ error: 'Unauthorized' });
+        return res.status(401).json({ error: 'Unauthorized / Session Expired' });
     }
 };
 
