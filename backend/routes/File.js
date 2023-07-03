@@ -1,4 +1,5 @@
 const express = require('express');
+const crypto = require('crypto');
 const Pdf = require('../models/Pdf');
 const Comment = require('../models/Comment');
 const authenticateToken = require('../middlewares/authMiddleware');
@@ -10,12 +11,13 @@ const router = express.Router();
 router.post('/upload', authenticateToken, async (req, res) => {
 
     try{
-        const {title, description, file} = req.body;
+        const {title, description, uniqueId, file} = req.body;
         const uploadedBy = req.userId;  // See middleware to understand.
         
         const pdf = new Pdf({
             title,
             description,
+            uniqueId,
             file,
             uploadedBy
         });
@@ -39,7 +41,7 @@ router.post('/comment', authenticateToken, async (req, res) => {
   
       const pdf = await Pdf.findById(pdfId);
       if (!pdf) {
-        return res.status(500).json({error: 'Inavlid PdfId. Pdf not found.'});
+        return res.status(404).json({error: 'Inavlid PdfId. Pdf not found.'});
       }
   
       const comment = new Comment({
@@ -61,27 +63,34 @@ router.post('/comment', authenticateToken, async (req, res) => {
   });
 
 
-  // GET - Get all comments of a PDF file.
-  router.get('/comment', authenticateToken, async (req, res) => {
+  // GET - Get all contents of a PDF file.
+  router.get('/view/:identifier', authenticateToken, async (req, res) => {
+
     
+    const identifier = req.params.identifier;
+
+    if(!identifier){
+        return res.status(404).json({error : 'Cannot find the file.'});
+    }
+
     try{
-        const { pdfId } = req.body;
-        const pdf = await Pdf.findOne({_id : pdfId});
-        const requestUserId = req.userId;
-        
-        if(!pdf){
-            return res.status(404).json({error : 'Pdf not found'});
-        }
-        
-        // Return array of json objects of username and their comment from pdf.comments object.
-        //console.log(pdf.comments[0]._id.toString());
+    const fileRequested = await Pdf.findOne({uniqueId : identifier});
+   
+    if(!fileRequested){
+        return res.status(400).json({error : 'File not found.'});
+    }
+    
+    const pdf = fileRequested;
+    
+    // Returns array of json objects of username and their comment from pdf.comments object.
+    
 
         const allComments = pdf.comments;
         
         const comments = await Comment.aggregate([
             {
                 $match: {
-                    pdfId: new mongoose.Types.ObjectId(pdfId)
+                    pdfId: new mongoose.Types.ObjectId(pdf._id.toString())
                   }
                 },
             {
@@ -101,16 +110,14 @@ router.post('/comment', authenticateToken, async (req, res) => {
                 }
             }
           ]);
-      
-          //console.log(comments);
-          
-        return res.status(200).json(comments);
-
+             
+     return res.status(200).json({pdf, comments});
+    
     } catch( err ){
         console.log(err);
         return res.status(500).json({error: 'Server Error while fetching comments'});
     }
 
-  });
+  }); 
   
 module.exports = router;

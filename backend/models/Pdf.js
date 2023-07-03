@@ -4,6 +4,7 @@ const Comment = require('./Comment');
 const pdfSchema = new mongoose.Schema({
     title: { type: String, required: true, maxlength: 50},
     description: { type: String, maxlength: 100 },
+    uniqueId: {type: String, required: true},
     file: { type: String, required: true }, // URL to the stored PDF file stored in S3
     uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     comments : [{ type: mongoose.Schema.Types.ObjectId, ref: 'Comment' }]
